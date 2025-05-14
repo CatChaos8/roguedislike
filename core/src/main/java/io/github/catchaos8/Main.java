@@ -61,7 +61,8 @@ public class Main extends ApplicationAdapter {
 
     boolean levelUp = false;
     Texture levelUpSelectionBG;
-
+    Texture levelUpSelectionOption;
+    Texture levelUpSelectionOptionHover;
 
 
     @Override
@@ -119,7 +120,8 @@ public class Main extends ApplicationAdapter {
         uiCamera.setToOrtho(false, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 
         levelUpSelectionBG = new Texture("levelUpBackground.png");
-
+        levelUpSelectionOption = new Texture("levelUpOption.png");
+        levelUpSelectionOptionHover = new Texture("levelUpOptionSelect.png");
     }
 
 
@@ -409,15 +411,39 @@ public class Main extends ApplicationAdapter {
         }
 
         if (levelUp) {
-            float imageWidth = 280f*uiWidth/300;
-            float imageHeight = 120f*uiWidth/300;
+            // Scale background image
+            float imageWidth = levelUpSelectionBG.getWidth() * uiWidth / 300f;
+            float imageHeight = levelUpSelectionBG.getHeight() * uiWidth / 300f;
 
             float drawX = (uiWidth - imageWidth) / 2f;
             float drawY = (uiHeight - imageHeight) / 2f;
 
             batch.draw(levelUpSelectionBG, drawX, drawY, imageWidth, imageHeight);
 
+            // Scale and position the 3 options
+            float optionWidth = levelUpSelectionOption.getWidth() * uiWidth / 300f;
+            float optionHeight = levelUpSelectionOption.getHeight() * uiHeight / 200f;
+
+            // Space evenly within the background
+            for (int i = 0; i < 3; i++) {
+                float spacing = (imageWidth - 3 * optionWidth) / 4f; // 4 gaps: [gap][opt][gap][opt][gap][opt][gap]
+                float optionX = drawX + spacing + i * (optionWidth + spacing);
+                float optionY = drawY + (imageHeight - optionHeight) / 2f;
+
+                float mouseX = Gdx.input.getX();
+                float mouseY = Gdx.input.getY();
+
+                boolean isMouseOver = mouseX >= optionX && mouseX <= optionX + optionWidth &&
+                    mouseY >= optionY && mouseY <= optionY + optionHeight; // Checks if the mouse is hovering over the thing
+
+                if(isMouseOver) {
+                    batch.draw(levelUpSelectionOptionHover, optionX, optionY, optionWidth, optionHeight);
+                } else {
+                    batch.draw(levelUpSelectionOption, optionX, optionY, optionWidth, optionHeight);
+                }
+            }
         }
+
 
         batch.end();
 
