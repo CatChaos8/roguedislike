@@ -15,7 +15,7 @@ public class PlayerInfo {
     private float bulletSpeed;
     private float hpRegen;
     private float bulletDamage;
-    private float bulletSpread; // in degrees
+    private float bulletAccuracy; // in degrees
     private float bulletDistance;
     private float bulletKnockback;
     private float lifeSteal;
@@ -43,7 +43,7 @@ public class PlayerInfo {
         this.bulletSize = 2f;
         this.bulletSpeed = 2.5f;
         this.bulletDamage = 5f;
-        this.bulletSpread = 0f;
+        this.bulletAccuracy = 0f;
         this.bulletKnockback = 1f;
         this.bulletDistance = 2.5f;
 
@@ -67,15 +67,10 @@ public class PlayerInfo {
 
     public void levelUp() {
         lvl++;
-        hp +=10;
-        maxHP +=10;
-        attackSpeed +=1;
-        lifeSteal += 0.01f;
-        System.out.println("Levelup" + lvl);
     }
 
     public int getXpToLevelUp() {
-        return 100 + (lvl - 1) * 25;
+        return (100 + (lvl - 1) * 25 + (2*lvl*lvl*lvl));
     }
 
     // Other Getters/Setters...
@@ -133,8 +128,8 @@ public class PlayerInfo {
     public float getBulletDamage() {return bulletDamage;}
     public void setBulletDamage(float amount) {this.bulletDamage = amount;}
 
-    public float getBulletSpread() {return bulletSpread;}
-    public void setBulletSpread(float bulletSpread) {this.bulletSpread = bulletSpread;}
+    public float getBulletAccuracy() {return bulletAccuracy;}
+    public void setBulletAccuracy(float bulletAccuracy) {this.bulletAccuracy = bulletAccuracy;}
 
     public float getBulletDistance() {return bulletDistance;}
     public void setBulletDistance(float amount) {this.bulletDistance = amount;}
@@ -160,7 +155,7 @@ public class PlayerInfo {
             ", pierce=" + pierce +
             ", bulletSize=" + bulletSize +
             ", bulletSpeed=" + bulletSpeed +
-            ", bulletSpread=" + bulletSpread +
+            ", bulletSpread=" + bulletAccuracy +
             ", xp=" + xp +
             ", lvl=" + lvl +
             '}';

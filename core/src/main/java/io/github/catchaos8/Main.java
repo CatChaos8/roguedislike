@@ -7,15 +7,18 @@ import com.badlogic.gdx.Input;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.Texture;
-import com.badlogic.gdx.graphics.g2d.Animation;
-import com.badlogic.gdx.graphics.g2d.Sprite;
-import com.badlogic.gdx.graphics.g2d.SpriteBatch;
-import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.graphics.g2d.*;
+import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.utils.Align;
 import com.badlogic.gdx.utils.Array;
 import com.badlogic.gdx.utils.ScreenUtils;
 import com.badlogic.gdx.utils.viewport.FitViewport;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Random;
 
 
 /** {@link com.badlogic.gdx.ApplicationListener} implementation shared by all platforms. */
@@ -59,10 +62,75 @@ public class Main extends ApplicationAdapter {
 
     OrthographicCamera uiCamera;
 
-    boolean levelUp = false;
+    boolean levelUp = false ;
     Texture levelUpSelectionBG;
     Texture levelUpSelectionOption;
     Texture levelUpSelectionOptionHover;
+    BitmapFont font;
+    Array<StatOption> statOptions = new Array<>();
+    List<StatOption> statOptionList = Arrays.asList(
+        new StatOption(100, "Attack Speed",
+            "Slightly increases your attack speed",
+            () -> player.setAttackSpeed(Math.max(player.getAttackSpeed() + 0.5f, player.getAttackSpeed()*1.1f))),
+        new StatOption(100, "Bullet Damage",
+            "Slightly increases your bullet damage",
+            () -> player.setBulletDamage(Math.max(player.getBulletDamage() + 2.5f, player.getBulletDamage()*1.1f))),
+        new StatOption(100, "Max Health",
+            "Slightly increases your max health",
+            () -> {
+            player.setMaxHP((int) Math.max(player.getMaxHP() + 2.5f, player.getMaxHP()*1.1f));
+            player.heal(Math.max(2.5f, player.getMaxHP()*1.1f - player.getMaxHP()));
+        }),
+        new StatOption(100, "Speed",
+            "Slightly increases your speed",
+            () -> player.setSpeed(Math.max(player.getSpeed() + 0.5f, player.getSpeed()*1.1f))),
+        new StatOption(100, "Pierce",
+            "Increases your max pierce by 1",
+            () -> player.setPierce(player.getPierce() + 1)),
+        new StatOption(100, "Bounce",
+            "Increases your max bounce by 1",
+            () -> player.setBounce(player.getBounce() + 1)),
+        new StatOption(100, "Lifesteal",
+            "Slightly increases your lifesteal",
+            () -> player.setLifeSteal(Math.max(player.getLifeSteal() + 0.025f, player.getLifeSteal()*1.05f))),
+        new StatOption(100, "Bullet Size",
+            "Slightly increases your bullet size",
+            () -> player.setBulletSize(Math.max(player.getBulletSize() + 1f, player.getBulletSize()*1.2f))),
+        new StatOption(100, "Bullet Distance",
+            "Slightly increases your bullet's max distance",
+            () -> player.setBulletDistance(Math.max(player.getBulletDistance() + 0.5f, player.getBulletDistance()*1.1f))),
+        new StatOption(100, "Bullet Knockback",
+            "Slightly increases your bullet's knockback",
+            () -> player.setBulletKnockback(Math.max(player.getBulletKnockback() + 0.5f, player.getBulletKnockback()*1.2f))),
+        new StatOption(100, "Bullet Speed",
+            "Slightly increases your bullet's speed",
+            () -> player.setBulletSpeed(Math.max(player.getBulletSpeed() + 0.5f, player.getBulletSpeed()*1.2f))),
+        new StatOption(50, "Front Bullet",
+            "Increases your front bullet amount by 1, but decreases your accuracy",
+            () -> {
+                player.setForwardShots(player.getForwardShots() + 1);
+                player.setBulletAccuracy(player.getBulletAccuracy() + 5);
+            }),
+        new StatOption(50, "Side Bullets",
+            "Increases your side bullets amount by 1, but decreases your accuracy",
+            () -> {
+            player.setLeftShots(player.getLeftShots() + 1);
+            player.setRightShots(player.getRightShots() + 1);
+            player.setBulletAccuracy(player.getBulletAccuracy() + 10);
+        }),
+        new StatOption(50, "Back bullet",
+            "Increases your back bullets amount by 1, but decreases your accuracy",
+            () -> {
+                player.setBackwardsShots(player.getBackwardsShots() + 1);
+                player.setBulletAccuracy(player.getBulletAccuracy() + 5);
+            }),
+        new StatOption(100, "Health Regen",
+            "Slightly increases your health regen",
+            () -> player.setHpRegen(Math.max(player.getHpRegen() + 0.25f, player.getHpRegen()*1.2f)))
+    ) ;
+
+    Texture xpBarFull;
+    Texture xpBarEmpty;
 
 
     @Override
@@ -119,9 +187,20 @@ public class Main extends ApplicationAdapter {
         uiCamera = new OrthographicCamera();
         uiCamera.setToOrtho(false, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
 
+
+        FreeTypeFontGenerator generator = new FreeTypeFontGenerator(Gdx.files.internal("fonts/slkscr.ttf"));
+        FreeTypeFontGenerator.FreeTypeFontParameter parameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
+
+        parameter.size = 32;
+        parameter.color = Color.WHITE;
+        font = generator.generateFont(parameter);
+
         levelUpSelectionBG = new Texture("levelUpBackground.png");
         levelUpSelectionOption = new Texture("levelUpOption.png");
         levelUpSelectionOptionHover = new Texture("levelUpOptionSelect.png");
+        statOptions.clear();
+        xpBarEmpty = new Texture("xpBarEmpty.png");
+        xpBarFull  = new Texture("xpBarFull.png");
     }
 
 
@@ -192,18 +271,33 @@ public class Main extends ApplicationAdapter {
             isNotPaused = !isNotPaused;
         }
 
-        if (Gdx.input.isKeyJustPressed(Input.Keys.F11)) {
-            if (Gdx.graphics.isFullscreen()) {
-                Gdx.graphics.setWindowedMode(1920, 1080);
-            } else {
-                Gdx.graphics.setFullscreenMode(Gdx.graphics.getDisplayMode());
-            }
-        }
+//        if (Gdx.input.isKeyJustPressed(Input.Keys.F11)) {
+//            if (Gdx.graphics.isFullscreen()) {
+//                Gdx.graphics.setWindowedMode(1920, 1080);
+//            } else {
+//                Gdx.graphics.setFullscreenMode(Gdx.graphics.getDisplayMode());
+//            }
+//        }
     }
 
 
     private void logic() {
         if (isNotPaused) {
+            if (player.getXp() >= player.getXpToLevelUp()) {
+                player.gainXp(-player.getXpToLevelUp());
+                player.levelUp();
+                canUnPause = false;
+                isNotPaused = false;
+                levelUp = true;
+                statOptions.clear();
+                while (statOptions.size < 3 ){
+                    StatOption randOption = getRandomStatOption(statOptionList); //Gets a random option from the list
+                    if(!statOptions.contains(randOption,true)) { // If it doesnt already have the option
+                        statOptions.add(randOption); //Adds the option
+                    }
+                }
+            }//If they have enough xp to levelup
+
             shotCD += Gdx.graphics.getDeltaTime();
             player.addIFrames(Gdx.graphics.getDeltaTime());
 
@@ -213,7 +307,7 @@ public class Main extends ApplicationAdapter {
             float enemySpawnTime = 2f;
             if (Math.random() < Gdx.graphics.getDeltaTime() * 1 / enemySpawnTime) {
                 for (int i = 0; i < player.getLvl(); i++) {
-                    if(enemies.size < 150) {
+                    if(enemies.size < 250) {
                         spawnEnemy();
                     }
                 }
@@ -237,13 +331,6 @@ public class Main extends ApplicationAdapter {
                 if (enemy.isDead()) { // Remove enemy if dead
                     enemies.removeIndex(i);
                     player.gainXp((int) enemy.xp);
-                    while (player.getXp() >= player.getXpToLevelUp()) {
-                        player.gainXp(-player.getXpToLevelUp());
-                        player.levelUp();
-                        canUnPause = false;
-                        isNotPaused = false;
-                        levelUp = true;
-                    }
                 }
 
             }
@@ -386,7 +473,10 @@ public class Main extends ApplicationAdapter {
             mouseWorld.y - crosshairSprite.getHeight() / 2f
         );
 
-        crosshairSprite.draw(batch);
+
+        if(isNotPaused) {
+            crosshairSprite.draw(batch);
+        }
 
         batch.end();
 
@@ -396,17 +486,26 @@ public class Main extends ApplicationAdapter {
         batch.setProjectionMatrix(uiCamera.combined);
         batch.begin();
 
+        float xpPercent = (float) player.getXp() /player.getXpToLevelUp();
+        int filledXP = (int) (xpPercent* xpBarFull.getWidth());
+
+        float xpScale = 8f;
+        TextureRegion xpFullRegion = new TextureRegion(xpBarFull, 0,0, filledXP, xpBarFull.getHeight());
+        batch.draw(xpBarEmpty, 50, uiHeight - 50 - xpBarEmpty.getHeight()*xpScale, xpBarEmpty.getWidth()*xpScale, xpBarEmpty.getHeight()*xpScale);
+        batch.draw(xpFullRegion, 50, uiHeight - 50 - xpFullRegion.getRegionHeight()*xpScale, xpFullRegion.getRegionWidth()*xpScale, xpFullRegion.getRegionHeight()*xpScale);
+
+
         //Health Bar
         float hpBarFullSize = Math.min(player.getMaxHP()*4f, 1500);
         float hpBarFilledSize = (player.getHp()/player.getMaxHP()*hpBarFullSize); //gets the percent of hp and stuff
-        batch.draw(healthBarEmptyTextureLeftCorner, 50, uiHeight-150, 50, 100);
-        batch.draw(healthBarEmptyTextureCenter, 100, uiHeight-150, hpBarFullSize, 100);
-        batch.draw(healthBarEmptyTextureRightCorner, 100+hpBarFullSize, uiHeight-150, 50, 100);
+        batch.draw(healthBarEmptyTextureLeftCorner, 50, uiHeight-150- xpBarEmpty.getHeight()*xpScale, 50, 100);
+        batch.draw(healthBarEmptyTextureCenter, 100, uiHeight-150- xpBarEmpty.getHeight()*xpScale, hpBarFullSize, 100);
+        batch.draw(healthBarEmptyTextureRightCorner, 100+hpBarFullSize, uiHeight-150- xpBarEmpty.getHeight()*xpScale, 50, 100);
         if(player.getHp() > 0) {
-            batch.draw(healthBarFullTextureLeftCorner, 50, uiHeight-150, 50, 100);
-            batch.draw(healthBarFullTextureCenter, 100, uiHeight-150, hpBarFilledSize, 100);
+            batch.draw(healthBarFullTextureLeftCorner, 50, uiHeight-150- xpBarEmpty.getHeight()*xpScale, 50, 100);
+            batch.draw(healthBarFullTextureCenter, 100, uiHeight-150- xpBarEmpty.getHeight()*xpScale, hpBarFilledSize, 100);
             if (player.getHp() >= player.getMaxHP()) {
-                batch.draw(healthBarFullTextureRightCorner, 100+hpBarFilledSize, uiHeight-150, 50, 100);
+                batch.draw(healthBarFullTextureRightCorner, 100+hpBarFilledSize, uiHeight-150- xpBarEmpty.getHeight()*xpScale, 50, 100);
             }
         }
 
@@ -431,20 +530,50 @@ public class Main extends ApplicationAdapter {
                 float optionY = drawY + (imageHeight - optionHeight) / 2f;
 
                 float mouseX = Gdx.input.getX();
-                float mouseY = Gdx.input.getY();
+                float mouseY = uiHeight - Gdx.input.getY();
 
                 boolean isMouseOver = mouseX >= optionX && mouseX <= optionX + optionWidth &&
-                    mouseY >= optionY && mouseY <= optionY + optionHeight; // Checks if the mouse is hovering over the thing
+                    mouseY >= optionY && mouseY <= optionY + optionHeight*0.75; // Checks if the mouse is hovering over the thing
 
-                if(isMouseOver) {
+                if(isMouseOver) {// Show the highlight on the one ur mouse is over
                     batch.draw(levelUpSelectionOptionHover, optionX, optionY, optionWidth, optionHeight);
+                    if(Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
+                        levelUp = false;
+                        isNotPaused = true;
+                        canUnPause = true;
+                        Runnable applyUpgrade = statOptions.get(i).applyUpgrade;
+                        applyUpgrade.run();
+                    }
                 } else {
                     batch.draw(levelUpSelectionOption, optionX, optionY, optionWidth, optionHeight);
                 }
+
+                String upgradeName = statOptions.get(i).name;
+                String upgradeDescription = statOptions.get(i).description;
+
+                font.getData().setScale(1.4f); // Set scale before measuring
+
+            // Measure name
+                GlyphLayout nameLayout = new GlyphLayout(font, upgradeName);
+                float nameX = optionX + (optionWidth - nameLayout.width) / 2f;
+                float nameY = optionY + (optionHeight + nameLayout.height) / 1.65f;
+
+                // Draw name
+                font.draw(batch, nameLayout, nameX, nameY);
+
+                // --- Draw Wrapped Description ---
+                // Wrap width: use most of the option width, with a little margin
+                float wrapWidth = optionWidth * 0.7f;
+                float descX = optionX + (optionWidth - wrapWidth) / 2f;
+                // Y position: below the name
+                float descY = nameY - nameLayout.height - 15f;
+
+                font.getData().setScale(1.2f);
+                // Draw with wrapping and center alignment
+                font.draw(batch, upgradeDescription, descX, descY, wrapWidth, Align.center, true);
+
             }
         }
-
-
         batch.end();
 
     }
@@ -467,6 +596,15 @@ public class Main extends ApplicationAdapter {
         healthBarFullTextureRightCorner.dispose();
         healthBarFullTextureLeftCorner.dispose();
         healthBarEmptyTextureCenter.dispose();
+
+        levelUpSelectionOptionHover.dispose();
+        levelUpSelectionOption.dispose();
+        levelUpSelectionBG.dispose();
+
+        xpBarFull.dispose();
+        xpBarEmpty.dispose();
+
+        font.dispose();
     }
 
     private void shoot() {
@@ -491,24 +629,24 @@ public class Main extends ApplicationAdapter {
 
         // Convert to angle
         float baseAngle = (float) Math.atan2(deltaY, deltaX);
-        float spreadDegrees = player.getBulletSpread();
-        float spreadRadians = (float) Math.toRadians(spreadDegrees);
+        float accuracyDegrees = player.getBulletAccuracy();
+        float accuracyRadians = (float) Math.toRadians(accuracyDegrees);
 
         // Random spread for each bullet
         for (int i = 0; i < player.getForwardShots(); i++) {
-            shootInDirection(baseAngle, spreadRadians, playerX, playerY, bulletSize);
+            shootInDirection(baseAngle, accuracyRadians, playerX, playerY, bulletSize);
         }
 
         for (int i = 0; i < player.getBackwardsShots(); i++) {
-            shootInDirection(baseAngle + (float) Math.PI, spreadRadians, playerX, playerY, bulletSize); // Shoot in the opposite direction
+            shootInDirection(baseAngle + (float) Math.PI, accuracyRadians, playerX, playerY, bulletSize); // Shoot in the opposite direction
         }
 
         for (int i = 0; i < player.getLeftShots(); i++) {
-            shootInDirection(baseAngle + (float) Math.PI / 2f, spreadRadians, playerX, playerY, bulletSize); // Shoot left
+            shootInDirection(baseAngle + (float) Math.PI / 2f, accuracyRadians, playerX, playerY, bulletSize); // Shoot left
         }
 
         for (int i = 0; i < player.getRightShots(); i++) {
-            shootInDirection(baseAngle - (float) Math.PI / 2f, spreadRadians, playerX, playerY, bulletSize); // Shoot right
+            shootInDirection(baseAngle - (float) Math.PI / 2f, accuracyRadians, playerX, playerY, bulletSize); // Shoot right
         }
     }
 
@@ -550,7 +688,7 @@ public class Main extends ApplicationAdapter {
             adjustedDistance
         );
 
-        // Add bullet to the list
+        // Add bullet to the array
         bullets.add(newBullet);
     }
 
@@ -618,11 +756,26 @@ public class Main extends ApplicationAdapter {
 
         return types.peek();
     }
+    public StatOption getRandomStatOption (List<StatOption> options) {
+        Random random = new Random();
 
-    public void setCanUnPause(boolean canUnPause) {
-        this.canUnPause = canUnPause;
+        int totalWeight = 0;
+
+        for (StatOption option: options) {
+            totalWeight += option.weight; //Increases the total weight for everything in the list
+        }
+
+        int randNum = random.nextInt(totalWeight); //Makes a random number that is less than the weight
+        int currentWeight = 0;
+        for (StatOption option: options) { //Goes through everything in the list again and
+            // if the random number becomes less than the current weight it means that it was selected
+            currentWeight += option.weight;
+            if(randNum <= currentWeight) {
+                return option;
+            }
+        }
+        return options.get(0); //If it didn't work for some reason
+
     }
-
-
 
 }
