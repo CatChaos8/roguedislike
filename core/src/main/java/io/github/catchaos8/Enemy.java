@@ -17,9 +17,11 @@ public class Enemy {
     float size;
     float xp;
 
-    float maxDist = 30f;
+    float maxDist = 100f;
 
     Texture texture;
+
+    private final Vector2 velocity = new Vector2();
 
     public Enemy(float x, float y, float maxHP, float damage, float speed, Texture texture, float size, int xp) {
         this.x = x;
@@ -40,7 +42,15 @@ public class Enemy {
     }
 
     public void update(float deltaTime, float targetX, float targetY, Rectangle playerBounds, PlayerInfo playerInfo) {
-        // movement towards a target (like the player)
+
+        //Apply Knockback stuff
+        x += velocity.x * deltaTime;
+        y += velocity.y * deltaTime;
+
+        //Decrease the strength of the kb over time
+        velocity.scl((float)Math.pow(0.85f, Gdx.graphics.getDeltaTime() * 60f)); //Makes it not fps dependent
+
+        // movement towards the player
         float dx = targetX - x;
         float dy = targetY - y;
         float length = (float) Math.sqrt(dx * dx + dy * dy);
@@ -56,7 +66,7 @@ public class Enemy {
 
         // Prevent enemy from going inside the player
         Rectangle enemyBounds = getBounds();
-        if (enemyBounds.overlaps(playerBounds)) {
+        if (enemyBounds.overlaps(playerBounds) && playerInfo.isDoCollision()) {
 
             // Push enemy out of player
             float overlapX = Math.min(
@@ -81,9 +91,13 @@ public class Enemy {
                     y += overlapY;
                 }
             }
+
             if(playerInfo.getiFrames() >= 0.5f) {
                 playerInfo.dealDamage(damage);
                 playerInfo.setiFrames(0);
+            }
+            if(playerInfo.getBulletKnockback() > 5) {
+                applyKnockBack(25f, playerBounds.x + playerBounds.width / 2, playerBounds.y + playerBounds.height / 2);
             }
         }
     }
@@ -131,6 +145,20 @@ public class Enemy {
             y += repel.y * Gdx.graphics.getDeltaTime();
         } //Moves the other enemies away
 
+    }
+
+    public void applyKnockBack(float strength, float sourceX, float sourceY) {
+        float deltaX = (x + size/2f) - sourceX;
+        float deltaY = (y + size/2f) - sourceY;
+        float distFromShot = (float) Math.sqrt(deltaX*deltaX + deltaY*deltaY);
+
+        if(distFromShot != 0) {
+            deltaX /=distFromShot;
+            deltaY /=distFromShot;
+
+            velocity.x += deltaX*strength;
+            velocity.y += deltaY*strength;
+        }
     }
 
 }

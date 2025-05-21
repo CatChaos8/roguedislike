@@ -8,7 +8,7 @@ public class EnemyType {
     public Texture texture;
     public float weight;
 
-    public EnemyType( float weight, float health, float speed, float size, int xp, float damage, Texture texture) {
+    public EnemyType(float weight, float health, float speed, float size, int xp, float damage, Texture texture) {
         this.health = health;
         this.speed = speed;
         this.size = size;

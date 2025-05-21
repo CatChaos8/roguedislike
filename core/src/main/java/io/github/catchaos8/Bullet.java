@@ -21,6 +21,8 @@ public class Bullet {
     Animation<TextureRegion> animation;
     float animationTime = 0f;  // Track time for animation
 
+    float baseDist;
+
     // In Bullet class
     Array<Enemy> hitEnemies = new Array<>();  // This will store the enemies the bullet has hit
 
@@ -35,6 +37,7 @@ public class Bullet {
         this.animation = animation;
         this.damage = damage;
         this.maxDistance = maxDistance;
+        this.baseDist = maxDistance;
     }
 
     // Update bullet position and travel distance
@@ -61,7 +64,7 @@ public class Bullet {
 
     // Check if the bullet should be removed (out of range)
     public boolean shouldRemove() {
-        return distanceTraveled > maxDistance || pierce <= 0;
+        return distanceTraveled > maxDistance ||(pierce < 0 && bounces < 0);
     }
 
     // Render the bullet on the screen
@@ -75,5 +78,49 @@ public class Bullet {
     // Get the bounding box of the bullet for collision detection
     public Rectangle getBounds() {
         return new Rectangle(x - size / 2, y - size / 2, size, size);
+    }
+
+    public void bounce(Array<Enemy> enemies) {
+        if (enemies == null || enemies.size == 0 || bounces < 0) {
+            return; //End the thing
+        }
+        bounces--;
+        damage *= 0.9f;
+        maxDistance += baseDist/8;
+        Enemy nearestEnemy = null;
+        float nearestDist = 9999999f;
+
+        for (Enemy enemy : enemies) {
+            if (hitEnemies.contains(enemy, true)) {
+                continue;
+            }
+            float enemyX = enemy.x + enemy.size/2f;
+            float enemyY = enemy.y + enemy.size/2f;
+
+            float deltaX = enemyX - x;
+            float deltaY = enemyY - y;
+
+            float dist = deltaX*deltaX + deltaY*deltaY;
+
+            if (dist < nearestDist) {
+                nearestDist = dist;
+                nearestEnemy = enemy;
+            }
+        }
+        if (nearestEnemy != null) { //Makes sure it exists
+            float deltaX = (nearestEnemy.x + nearestEnemy.size/2f) - x;
+            float deltaY = (nearestEnemy.y + nearestEnemy.size/2f) - y;
+            float length = (float) Math.sqrt(deltaX*deltaX + deltaY*deltaY);
+
+            if (length != 0) {
+                deltaY /= length;
+                deltaX /= length;
+            }
+
+            float speed = (float) Math.sqrt(speedX*speedX+speedY*speedY);
+
+            speedX = deltaX*speed;
+            speedY = deltaY*speed;
+        }
     }
 }

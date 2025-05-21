@@ -1,29 +1,39 @@
 package io.github.catchaos8;
 
 public class PlayerInfo {
+    private float speed;
+
+    private float attackSpeed;
+    private float playerAttackStmCost;
+
+    private int maxHP;
+    private float hp;
+    private float hpRegen;
+
+
     private int forwardShots;
     private int backwardsShots;
     private int leftShots;
     private int rightShots;
-    private float speed;
-    private float attackSpeed;
-    private int maxHP;
-    private float hp;
-    private int bounce;
-    private int pierce;
-    private float bulletSize;
-    private float bulletSpeed;
-    private float hpRegen;
-    private float bulletDamage;
-    private float bulletAccuracy; // in degrees
-    private float bulletDistance;
-    private float bulletKnockback;
+
+    private int pierce, bounce;
+    private float bulletSize, bulletSpeed, bulletDamage, bulletAccuracy, bulletDistance, bulletKnockback;
+
     private float lifeSteal;
+    private float luck;
+
+    private int maxStamina;
+    private float stamina, staminaRegen;
+    private boolean isExhausted;
+
 
     private int xp;
     private int lvl;
 
     private float iFrames;
+
+    private boolean doCollision;
+
 
     public PlayerInfo() {
         this.forwardShots = 1;
@@ -31,12 +41,14 @@ public class PlayerInfo {
         this.leftShots = 0;
         this.rightShots = 0;
         this.speed = 2.5f;
+
         this.attackSpeed = 1;
+        this.playerAttackStmCost = 5f;
 
         this.maxHP = 100;
         this.hp = maxHP;
-        this.hpRegen = 0.0f;
-        this.lifeSteal = 0.00f;
+        this.hpRegen = 0.0f; //Per second
+        this.lifeSteal = 0.0f;
 
         this.bounce = 0;
         this.pierce = 0;
@@ -47,9 +59,17 @@ public class PlayerInfo {
         this.bulletKnockback = 1f;
         this.bulletDistance = 2.5f;
 
+        this.luck = 0f;
+
         this.xp = 0;
         this.lvl = 1;
+
+        this.maxStamina = 100;
+        this.stamina = maxStamina;
+        this.staminaRegen = 10f; //per second
+
         this.iFrames = 0;
+        this.doCollision = true;
     }
 
     // XP & Leveling
@@ -70,7 +90,7 @@ public class PlayerInfo {
     }
 
     public int getXpToLevelUp() {
-        return (100 + (lvl - 1) * 25 + (2*lvl*lvl*lvl));
+        return (int) (100 + (lvl - 1) * 25 + (10*Math.pow(lvl, 3.0)));
     }
 
     // Other Getters/Setters...
@@ -140,6 +160,9 @@ public class PlayerInfo {
     public float getHpRegen() { return hpRegen; }
     public void setHpRegen(float hpRegen) { this.hpRegen = hpRegen; }
 
+    public float getLuck() {return luck;}
+    public void setLuck(float luck) {this.luck = luck;}
+
     @Override
     public String toString() {
         return "PlayerInfo{" +
@@ -151,15 +174,28 @@ public class PlayerInfo {
             ", attackSpeed=" + attackSpeed +
             ", maxHP=" + maxHP +
             ", hp=" + hp +
+            ", hpRegen=" + hpRegen +
+            ", stamina=" + stamina +
+            ", maxStamina=" + maxStamina +
+            ", staminaRegen=" + staminaRegen +
+            ", isExhausted=" + isExhausted +
             ", bounce=" + bounce +
             ", pierce=" + pierce +
             ", bulletSize=" + bulletSize +
             ", bulletSpeed=" + bulletSpeed +
-            ", bulletSpread=" + bulletAccuracy +
+            ", bulletDamage=" + bulletDamage +
+            ", bulletAccuracy=" + bulletAccuracy +
+            ", bulletDistance=" + bulletDistance +
+            ", bulletKnockback=" + bulletKnockback +
+            ", lifeSteal=" + lifeSteal +
             ", xp=" + xp +
             ", lvl=" + lvl +
+            ", luck=" + luck +
+            ", iFrames=" + iFrames +
+            ", doCollision=" + doCollision +
             '}';
     }
+
 
     public void addIFrames(float amount) {
         this.iFrames += amount;
@@ -172,4 +208,73 @@ public class PlayerInfo {
         this.iFrames = amount;
     }
 
+    public boolean isDoCollision() {
+        return this.doCollision;
+    }
+    public void setDoCollision(boolean doCollision) {
+        this.doCollision = doCollision;
+    }
+
+    public float getStamina() {
+        return stamina;
+    }
+
+    public float getStaminaRegen() {
+        return staminaRegen;
+    }
+
+    public int getMaxStamina() {
+        return maxStamina;
+    }
+
+    public void setStaminaRegen(float staminaRegen) {
+        this.staminaRegen = staminaRegen;
+    }
+
+    public void setStamina(float stamina) {
+        this.stamina = stamina;
+    }
+
+    public void setMaxStamina(int maxStamina) {
+        this.maxStamina = maxStamina;
+    }
+
+    public boolean spendStamina(float amount) {
+        if (this.stamina >= amount && !this.isExhausted) {
+            this.stamina -= amount;
+            return true;
+        } else if(!this.isExhausted){
+            this.stamina = 0;
+            this.isExhausted = true;
+            return true;
+        }
+        return false;
+    }
+
+    public void regenStamina(float amount) {
+        if(!this.isExhausted) {
+            this.stamina = Math.min(this.stamina + amount, this.maxStamina);
+        } else {
+            this.stamina = Math.min(this.stamina + amount*3, this.maxStamina);
+        }
+        if(this.stamina >= this.maxStamina) {
+            this.isExhausted = false;
+        }
+    }
+
+    public boolean isExhausted() {
+        return isExhausted;
+    }
+
+    public void setExhausted(boolean exhausted) {
+        isExhausted = exhausted;
+    }
+
+    public float getPlayerAttackStmCost() {
+        return playerAttackStmCost;
+    }
+
+    public void setPlayerAttackStmCost(float playerAttackStmCost) {
+        this.playerAttackStmCost = playerAttackStmCost;
+    }
 }
