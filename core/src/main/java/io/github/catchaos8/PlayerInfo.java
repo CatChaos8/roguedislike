@@ -1,6 +1,13 @@
 package io.github.catchaos8;
 
+import com.badlogic.gdx.math.Vector2;
+
 public class PlayerInfo {
+    private float x, y;
+    private float size;
+
+    private Vector2 playerKB;
+
     private float speed;
 
     private float attackSpeed;
@@ -18,6 +25,7 @@ public class PlayerInfo {
 
     private int pierce, bounce;
     private float bulletSize, bulletSpeed, bulletDamage, bulletAccuracy, bulletDistance, bulletKnockback;
+    private float critChance, critAmount;
 
     private float lifeSteal;
     private float luck;
@@ -34,20 +42,27 @@ public class PlayerInfo {
 
     private boolean doCollision;
 
+    boolean noStmRegenBoost;
+
 
     public PlayerInfo() {
+        this.x = 0;
+        this.y = 0;
+
+        this.size = 0.45f;
+
         this.forwardShots = 1;
         this.backwardsShots = 0;
         this.leftShots = 0;
         this.rightShots = 0;
         this.speed = 2.5f;
 
-        this.attackSpeed = 1;
-        this.playerAttackStmCost = 5f;
+        this.attackSpeed = 9999;
+        this.playerAttackStmCost = 0.1f;
 
         this.maxHP = 100;
         this.hp = maxHP;
-        this.hpRegen = 0.0f; //Per second
+        this.hpRegen = 111f; //Per second
         this.lifeSteal = 0.0f;
 
         this.bounce = 0;
@@ -59,6 +74,9 @@ public class PlayerInfo {
         this.bulletKnockback = 1f;
         this.bulletDistance = 2.5f;
 
+        this.critChance = 0.05f; //Chance to crit(Can be over 100, and crit twice)
+        this.critAmount = 0.50f;//% Increase in damage on crits
+
         this.luck = 0f;
 
         this.xp = 0;
@@ -66,10 +84,14 @@ public class PlayerInfo {
 
         this.maxStamina = 100;
         this.stamina = maxStamina;
-        this.staminaRegen = 10f; //per second
+        this.staminaRegen = 15f; //per second
 
         this.iFrames = 0;
         this.doCollision = true;
+
+        this.playerKB = new Vector2(0, 0);
+
+        noStmRegenBoost = false;
     }
 
     // XP & Leveling
@@ -90,7 +112,7 @@ public class PlayerInfo {
     }
 
     public int getXpToLevelUp() {
-        return (int) (100 + (lvl - 1) * 25 + (10*Math.pow(lvl, 3.0)));
+        return (int) (100*Math.pow(1.5, (this.lvl - 1)));
     }
 
     // Other Getters/Setters...
@@ -162,6 +184,27 @@ public class PlayerInfo {
 
     public float getLuck() {return luck;}
     public void setLuck(float luck) {this.luck = luck;}
+
+    public float getSize() {
+        return size;
+    }
+    public void setSize(float size) {
+        this.size = size;
+    }
+
+    public float getX() {
+        return x;
+    }
+    public float getY() {
+        return y;
+    }
+
+    public void setX(float x) {
+        this.x = x;
+    }
+    public void setY(float y) {
+        this.y = y;
+    }
 
     @Override
     public String toString() {
@@ -252,13 +295,15 @@ public class PlayerInfo {
     }
 
     public void regenStamina(float amount) {
-        if(!this.isExhausted) {
-            this.stamina = Math.min(this.stamina + amount, this.maxStamina);
-        } else {
-            this.stamina = Math.min(this.stamina + amount*3, this.maxStamina);
-        }
-        if(this.stamina >= this.maxStamina) {
-            this.isExhausted = false;
+        if(this.doCollision) {
+            if (!this.isExhausted || !this.noStmRegenBoost) {
+                this.stamina = Math.min(this.stamina + amount, this.maxStamina);
+            } else {
+                this.stamina = Math.min(this.stamina + amount * 3, this.maxStamina);
+            }
+            if (this.stamina >= this.maxStamina) {
+                this.isExhausted = false;
+            }
         }
     }
 
@@ -276,5 +321,51 @@ public class PlayerInfo {
 
     public void setPlayerAttackStmCost(float playerAttackStmCost) {
         this.playerAttackStmCost = playerAttackStmCost;
+    }
+
+    public float getCritAmount() {
+        return critAmount;
+    }
+
+    public float getCritChance() {
+        return critChance;
+    }
+
+    public void setCritAmount(float critAmount) {
+        this.critAmount = critAmount;
+    }
+
+    public void setCritChance(float critChance) {
+        this.critChance = critChance;
+    }
+
+    public Vector2 getPlayerKB() {
+        return playerKB;
+    }
+
+    public void setPlayerKB(Vector2 playerKB) {
+        this.playerKB = playerKB;
+    }
+
+    public void applyKB(float kbStrength, Vector2 source) {
+        float deltaX = (x + size/2f) - source.x;
+        float deltaY = (y + size/2f) - source.y;
+        float distFromAttack = (float) Math.sqrt(deltaX*deltaX + deltaY*deltaY);
+
+        if(distFromAttack != 0) {
+            deltaX /= distFromAttack;
+            deltaY /= distFromAttack;
+
+            playerKB.x = deltaX*kbStrength;
+            playerKB.y = deltaY*kbStrength;
+        }
+    }
+
+    public boolean isNoStmRegenBoost() {
+        return noStmRegenBoost;
+    }
+
+    public void setNoStmRegenBoost(boolean noStmRegenBoost) {
+        this.noStmRegenBoost = noStmRegenBoost;
     }
 }
