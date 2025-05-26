@@ -25,8 +25,11 @@ public class Main extends ApplicationAdapter {
     FitViewport viewport;
     float velocityX;
     float velocityY;
+
     float acceleration = 10f;       // How quickly you speed up
     float friction = 6f;           // How quickly you slow down
+
+    Random random = new Random();
 
     boolean isNotPaused = true;
     private boolean canUnPause = true;
@@ -70,16 +73,20 @@ public class Main extends ApplicationAdapter {
     List<StatOption> statOptionList = Arrays.asList(
         //Common
         new StatOption(250, "Attack Speed",
-            "Slightly increases your attack speed",
-            () -> player.setAttackSpeed(Math.max(player.getAttackSpeed() + 0.5f, player.getAttackSpeed()*1.1f)), -1),
+            "Slightly increases your attack speed, and decreases the attack stamina cost",
+            () -> {
+                    player.setAttackSpeed(Math.max(player.getAttackSpeed() + 0.5f, player.getAttackSpeed()*1.1f));
+                    player.setPlayerAttackStmCost(player.getPlayerAttackStmCost()*0.9f);
+                    }, -1),
         new StatOption(250, "Bullet Damage",
             "Slightly increases your bullet damage",
             () -> player.setBulletDamage(Math.max(player.getBulletDamage() + 2.5f, player.getBulletDamage()*1.1f)), -1),
         new StatOption(250, "Max Health",
             "Slightly increases your max health",
             () -> {
+                float oldHP = player.getMaxHP();
                 player.setMaxHP((int) Math.max(player.getMaxHP() + 10f, player.getMaxHP()*1.05f));
-                player.heal(Math.max(10f, player.getMaxHP()*1.05f - player.getMaxHP()));
+                player.heal(player.getMaxHP() - oldHP);
                 hpBarTotalWidth = calculateMaxHPWidth();
         }, -1),
         new StatOption(250, "Speed",
@@ -91,12 +98,12 @@ public class Main extends ApplicationAdapter {
         new StatOption(250, "Bounce",
             "Increases your max bounce by 1",
             () -> player.setBounce(player.getBounce() + 1), -1),
-        new StatOption(250, "Lifesteal",
-            "Slightly increases your lifesteal, but decreases your speed",
-            () -> {
-                player.setLifeSteal(Math.max(player.getLifeSteal() + 0.025f, player.getLifeSteal()*1.05f));
-                player.setSpeed((player.getSpeed()*0.9f));
-            }, -1),
+//        new StatOption(250, "Lifesteal",
+//            "Slightly increases your lifesteal, but decreases your speed",
+//            () -> {
+//                player.setLifeSteal(Math.max(player.getLifeSteal() + 0.0025f, player.getLifeSteal()*1.05f));
+//                player.setSpeed((player.getSpeed()*0.9f));
+//            }, -1),
         new StatOption(250, "Bullet Size",
             "Slightly increases your bullet size",
             () -> player.setBulletSize(Math.max(player.getBulletSize() + 1f, player.getBulletSize()*1.2f)), -1),
@@ -115,18 +122,32 @@ public class Main extends ApplicationAdapter {
         new StatOption(200, "Luck",
             "Slightly increases your luck",
             () -> player.setLuck(Math.max(player.getLuck() + 1f, player.getLuck()*1.05f)), -1),
+        new StatOption(250, "Stamina Regen",
+            "Slightly increases your stamina regeneration",
+            () -> player.setStaminaRegen(Math.max(player.getStaminaRegen() + 1.5f, player.getStaminaRegen() * 1.1f)), -1),
+
+        new StatOption(250, "Max Stamina",
+            "Slightly increases your maximum stamina",
+            () -> {
+                player.setMaxStamina((int)Math.max(player.getMaxStamina() + 10f, player.getMaxStamina() * 1.025f));
+                stmBarTotalWidth = calculateMaxStmWidth();
+            }, -1),
         //================================Uncommon=========================================//
         new StatOption(50, "Attack Speed",
-                           "Increases your attack speed",
-                           () -> player.setAttackSpeed(Math.max(player.getAttackSpeed() + 1f, player.getAttackSpeed()*1.1f)), 0.5f),
+                           "Increases your attack speed, and decreases the attack stamina cost",
+                           () -> {
+                                    player.setAttackSpeed(Math.max(player.getAttackSpeed() + 1f, player.getAttackSpeed()*1.1f));
+                                    player.setPlayerAttackStmCost(player.getPlayerAttackStmCost()*0.9f);
+                                    }, 0.5f),
         new StatOption(50, "Bullet Damage",
                            "Increases your bullet damage",
                            () -> player.setBulletDamage(Math.max(player.getBulletDamage() + 7.5f, player.getBulletDamage()*1.1f)), 0.5f),
         new StatOption(50, "Max Health",
                            "Increases your max health",
                            () -> {
+                                float oldHP = player.getMaxHP();
                                 player.setMaxHP((int) Math.max(player.getMaxHP() + 25f, player.getMaxHP()*1.2f));
-                                player.heal(Math.max(2.5f, player.getMaxHP()*1.1f - player.getMaxHP()));
+                                player.heal(player.getMaxHP() - oldHP);
                                 hpBarTotalWidth = calculateMaxHPWidth();
     }, -1),
         new StatOption(50, "Speed",
@@ -138,75 +159,89 @@ public class Main extends ApplicationAdapter {
         new StatOption(50, "Bounce",
                            "Increases your max bounce by 2",
                            () -> player.setBounce(player.getBounce() + 2), 0.5f),
-        new StatOption(50, "Lifesteal",
-                           "Increases your lifesteal, but decreases your speed",
-                           () ->  {
-                                player.setLifeSteal(Math.max(player.getLifeSteal() + 0.05f, player.getLifeSteal()*1.05f));
-                                player.setSpeed(player.getSpeed()*0.8f);
-                               hpBarTotalWidth = calculateMaxHPWidth();
-                            }, 0.5f),
+//        new StatOption(50, "Lifesteal",
+//                           "Increases your lifesteal, but decreases your speed",
+//                           () ->  {
+//                                player.setLifeSteal(Math.max(player.getLifeSteal() + 0.005f, player.getLifeSteal()*1.1f));
+//                                player.setSpeed(player.getSpeed()*0.9f);
+//                               hpBarTotalWidth = calculateMaxHPWidth();
+//                            }, 0.5f),
         new StatOption(50, "Bullet Size",
                            "Increases your bullet size",
-                           () -> player.setBulletSize(Math.max(player.getBulletSize() + 2.5f, player.getBulletSize()*1.25f)), 0.5f),
+                           () -> player.setBulletSize(Math.max(player.getBulletSize() + 2.5f, player.getBulletSize()*1.1f)), 0.5f),
         new StatOption(50, "Bullet Distance",
                            "Increases your bullet's max distance",
-                           () -> player.setBulletDistance(Math.max(player.getBulletDistance() + 1f, player.getBulletDistance()*1.2f)), 0.5f),
+                           () -> player.setBulletDistance(Math.max(player.getBulletDistance() + 1f, player.getBulletDistance()*1.1f)), 0.5f),
         new StatOption(50, "Bullet Knockback",
                            "Increases your bullet's knockback",
-                           () -> player.setBulletKnockback(Math.max(player.getBulletKnockback() + 4f, player.getBulletKnockback()*1.4f)), 0.5f),
+                           () -> player.setBulletKnockback(Math.max(player.getBulletKnockback() + 4f, player.getBulletKnockback()*1.1f)), 0.5f),
         new StatOption(50, "Bullet Speed",
                            "Increases your bullet's speed",
-                           () -> player.setBulletSpeed(Math.max(player.getBulletSpeed() + 1f, player.getBulletSpeed()*1.4f)), 0.5f),
+                           () -> player.setBulletSpeed(Math.max(player.getBulletSpeed() + 1f, player.getBulletSpeed()*1.1f)), 0.5f),
         new StatOption(50, "Health Regen",
                            "Increases your health regen",
-                           () -> player.setHpRegen(Math.max(player.getHpRegen() + 0.75f, player.getHpRegen()*1.2f)), 0.5f),
+                           () -> player.setHpRegen(Math.max(player.getHpRegen() + 0.75f, player.getHpRegen()*1.1f)), 0.5f),
         new StatOption(50, "Luck",
                            "Increases your luck",
                            () -> player.setLuck(Math.max(player.getLuck() + 2.5f, player.getLuck()*1.1f)), 0.5f),
+        new StatOption(50, "Stamina Regen",
+            "Increases your stamina regeneration",
+            () -> player.setStaminaRegen(Math.max(player.getStaminaRegen() + 3f, player.getStaminaRegen() * 1.1f)), 0.5f),
+
+        new StatOption(50, "Max Stamina",
+            "Increases your maximum stamina",
+            () -> {
+                player.setMaxStamina((int)Math.max(player.getMaxStamina() + 25f, player.getMaxStamina() * 1.1f));
+                stmBarTotalWidth = calculateMaxStmWidth();
+            }, 0.5f),
         // ================================ Rare Upgrades ================================ //
         new StatOption(25, "Attack Speed",
-            "Greatly increases your attack speed",
-            () -> player.setAttackSpeed(Math.max(player.getAttackSpeed() + 2f, player.getAttackSpeed() * 1.3f)), 1.0f),
+            "Greatly increases your attack speed, and decreases the attack stamina cost",
+            () -> {
+                player.setAttackSpeed(Math.max(player.getAttackSpeed() + 2f, player.getAttackSpeed() * 1.15f));
+                player.setPlayerAttackStmCost(player.getPlayerAttackStmCost()*0.9f);
+            }, 1.0f),
         new StatOption(25, "Bullet Damage",
             "Greatly increases your bullet damage",
-            () -> player.setBulletDamage(Math.max(player.getBulletDamage() + 15f, player.getBulletDamage() * 1.3f)), 1.0f),
+            () -> player.setBulletDamage(Math.max(player.getBulletDamage() + 15f, player.getBulletDamage() * 1.15f)), 1.0f),
         new StatOption(25, "Max Health",
             "Greatly increases your max health",
             () -> {
-                player.setMaxHP((int)Math.max(player.getMaxHP() + 50f, player.getMaxHP() * 1.3f));
-                player.heal(Math.max(10f, player.getMaxHP() * 1.1f - player.getMaxHP()));
+                float oldHP = player.getMaxHP();
+                player.setMaxHP((int)Math.max(player.getMaxHP() + 50f, player.getMaxHP() * 1.15f));
+                player.heal(player.getMaxHP() - oldHP);
                 hpBarTotalWidth = calculateMaxHPWidth();
             }, 1.0f),
         new StatOption(25, "Speed",
             "Greatly increases your movement speed",
-            () -> player.setSpeed(Math.max(player.getSpeed() + 2f, player.getSpeed() * 1.3f)), 1.0f),
+            () -> player.setSpeed(Math.max(player.getSpeed() + 2f, player.getSpeed() * 1.15f)), 1.0f),
         new StatOption(25, "Pierce",
             "Increases your max pierce by 3",
             () -> player.setPierce(player.getPierce() + 3), 1.0f),
         new StatOption(25, "Bounce",
             "Increases your max bounce by 3",
             () -> player.setBounce(player.getBounce() + 3), 1.0f),
-        new StatOption(25, "Lifesteal",
-            "Greatly increases your lifesteal, but decreases your speed",
-            () -> {
-            player.setLifeSteal(Math.max(player.getLifeSteal() + 0.075f, player.getLifeSteal() * 1.1f));
-            player.setSpeed(player.getSpeed()*0.8f);
-            }, 1.0f),
+//        new StatOption(25, "Lifesteal",
+//            "Greatly increases your lifesteal, but decreases your speed",
+//            () -> {
+//            player.setLifeSteal(Math.max(player.getLifeSteal() + 0.0075f, player.getLifeSteal() * 1.15f));
+//            player.setSpeed(player.getSpeed()*0.9f);
+//            }, 1.0f),
         new StatOption(25, "Bullet Size",
             "Greatly increases your bullet size",
-            () -> player.setBulletSize(Math.max(player.getBulletSize() + 4f, player.getBulletSize() * 1.4f)), 1.0f),
+            () -> player.setBulletSize(Math.max(player.getBulletSize() + 4f, player.getBulletSize() * 1.15f)), 1.0f),
         new StatOption(25, "Bullet Distance",
             "Greatly increases your bullet max distance",
-            () -> player.setBulletDistance(Math.max(player.getBulletDistance() + 2f, player.getBulletDistance() * 1.3f)), 1.0f),
+            () -> player.setBulletDistance(Math.max(player.getBulletDistance() + 2f, player.getBulletDistance() * 1.15f)), 1.0f),
         new StatOption(25, "Bullet Knockback",
             "Greatly increases your bullet knockback",
-            () -> player.setBulletKnockback(Math.max(player.getBulletKnockback() + 8f, player.getBulletKnockback() * 1.5f)), 1.0f),
+            () -> player.setBulletKnockback(Math.max(player.getBulletKnockback() + 8f, player.getBulletKnockback() * 1.15f)), 1.0f),
         new StatOption(25, "Bullet Speed",
             "Greatly increases your bullet speed",
-            () -> player.setBulletSpeed(Math.max(player.getBulletSpeed() + 2f, player.getBulletSpeed() * 1.5f)), 1.0f),
+            () -> player.setBulletSpeed(Math.max(player.getBulletSpeed() + 2f, player.getBulletSpeed() * 1.15f)), 1.0f),
         new StatOption(15, "Health Regen",
             "Greatly increases your health regeneration",
-            () -> player.setHpRegen(Math.max(player.getHpRegen() + 1.5f, player.getHpRegen() * 1.3f)), 1.0f),
+            () -> player.setHpRegen(Math.max(player.getHpRegen() + 1.5f, player.getHpRegen() * 1.15f)), 1.0f),
         new StatOption(25, "Luck",
             "Greatly increases your luck",
             () -> player.setLuck(Math.max(player.getLuck() + 5f, player.getLuck() * 1.15f)), 1.0f),
@@ -229,50 +264,64 @@ public class Main extends ApplicationAdapter {
                 player.setBackwardsShots(player.getBackwardsShots() + 1);
                 player.setBulletAccuracy(player.getBulletAccuracy() + 5);
             }, 1f),
+        new StatOption(25, "Stamina Regen",
+            "Greatly increases your stamina regeneration",
+            () -> player.setStaminaRegen(Math.max(player.getStaminaRegen() + 5f, player.getStaminaRegen() * 1.15f)), 1.0f),
+
+        new StatOption(25, "Max Stamina",
+            "Greatly increases your maximum stamina",
+            () -> {
+                player.setMaxStamina((int)Math.max(player.getMaxStamina() + 50f, player.getMaxStamina() * 1.15f));
+                stmBarTotalWidth = calculateMaxStmWidth();
+            }, 1.0f),
         // ================================ Epic Upgrades ================================ //
         new StatOption(10, "Attack Speed",
-            "Massively increases your attack speed",
-            () -> player.setAttackSpeed(Math.max(player.getAttackSpeed() + 4f, player.getAttackSpeed() * 1.5f)), 2.0f),
+            "Massively increases your attack speed, and decreases the attack stamina cost",
+            () -> {
+                player.setAttackSpeed(Math.max(player.getAttackSpeed() + 4f, player.getAttackSpeed() * 1.2f));
+                player.setPlayerAttackStmCost(player.getPlayerAttackStmCost()*0.9f);
+            }, 2.0f),
         new StatOption(10, "Bullet Damage",
             "Massively increases your bullet damage",
-            () -> player.setBulletDamage(Math.max(player.getBulletDamage() + 30f, player.getBulletDamage() * 1.5f)), 2.0f),
+            () -> player.setBulletDamage(Math.max(player.getBulletDamage() + 30f, player.getBulletDamage() * 1.2f)), 2.0f),
         new StatOption(10, "Max Health",
             "Massively increases your max health",
             () -> {
-                player.setMaxHP((int)Math.max(player.getMaxHP() + 100f, player.getMaxHP() * 1.5f));
-                player.heal(Math.max(25f, player.getMaxHP() * 1.15f - player.getMaxHP()));
+                float oldHP = player.getMaxHP();
+                player.setMaxHP((int)Math.max(player.getMaxHP() + 100f, player.getMaxHP() * 1.2f));
+                player.heal(player.getMaxHP() - oldHP);
                 hpBarTotalWidth = calculateMaxHPWidth();
             }, 2.0f),
         new StatOption(10, "Speed",
             "Massively increases your movement speed",
-            () -> player.setSpeed(Math.max(player.getSpeed() + 4f, player.getSpeed() * 1.5f)), 2.0f),
+            () -> player.setSpeed(Math.max(player.getSpeed() + 4f, player.getSpeed() * 1.2f)), 2.0f),
         new StatOption(10, "Pierce",
             "Increases your max pierce by 5",
             () -> player.setPierce(player.getPierce() + 5), 2.0f),
         new StatOption(10, "Bounce",
             "Increases your max bounce by 5",
             () -> player.setBounce(player.getBounce() + 5), 2.0f),
-        new StatOption(10, "Lifesteal",
-            "Massively increases your lifesteal, but decreases your speed",
-            () -> {
-                player.setLifeSteal(Math.max(player.getLifeSteal() + 0.1f, player.getLifeSteal() * 1.15f));
-                player.setSpeed(player.getSpeed()*0.8f);
-            }, 2.0f),
+//        new StatOption(10, "Lifesteal",
+//            "Massively increases your lifesteal, but decreases your speed",
+//            () -> {
+//                player.setLifeSteal(Math.max(player.getLifeSteal() + 0.01f, player.getLifeSteal() * 1.2f));
+//                player.setSpeed(player.getSpeed()*0.f);
+//            }, 2.0f),
         new StatOption(10, "Bullet Size",
             "Massively increases your bullet size",
-            () -> player.setBulletSize(Math.max(player.getBulletSize() + 6f, player.getBulletSize() * 1.6f)), 2.0f),
+            () -> player.setBulletSize(Math.max(player.getBulletSize() + 6f, player.getBulletSize() * 1.2f)), 2.0f),
         new StatOption(10, "Bullet Distance",
             "Massively increases your bullet's max distance",
-            () -> player.setBulletDistance(Math.max(player.getBulletDistance() + 4f, player.getBulletDistance() * 1.5f)), 2.0f),
+            () -> player.setBulletDistance(Math.max(player.getBulletDistance() + 4f, player.getBulletDistance() * 1.2f)), 2.0f),
         new StatOption(10, "Bullet Knockback",
             "Massively increases your bullet's knockback",
-            () -> player.setBulletKnockback(Math.max(player.getBulletKnockback() + 16f, player.getBulletKnockback() * 1.75f)), 2.0f),
+            () -> player.setBulletKnockback(Math.max(player.getBulletKnockback() + 16f, player.getBulletKnockback() * 1.2f)), 2.0f),
         new StatOption(10, "Bullet Speed",
             "Massively increases your bullet's speed",
-            () -> player.setBulletSpeed(Math.max(player.getBulletSpeed() + 4f, player.getBulletSpeed() * 1.75f)), 2.0f),
+            () -> player.setBulletSpeed(Math.max(player.getBulletSpeed() + 4f, player.getBulletSpeed() * 1.2f)), 2.0f),
         new StatOption(5, "Health Regen",
             "Massively increases your health regeneration",
-            () -> player.setHpRegen(Math.max(player.getHpRegen() + 3f, player.getHpRegen() * 1.5f)), 2.0f),
+            () -> player.setHpRegen(Math.max(player.getHpRegen() + 3f, player.getHpRegen() * 1.2f)), 2.0f),
         new StatOption(10, "Luck",
             "Massively increases your luck",
             () -> player.setLuck(Math.max(player.getLuck() + 10f, player.getLuck() * 1.2f)), 2.0f),
@@ -294,8 +343,18 @@ public class Main extends ApplicationAdapter {
                            () -> {
         player.setBackwardsShots(player.getBackwardsShots() + 3);
         player.setBulletAccuracy(player.getBulletAccuracy() + 7);
-    }, 2f)
-    ) ;
+    }, 2f),
+        new StatOption(15, "Stamina Regen",
+            "Massively increases your stamina regeneration",
+            () -> player.setStaminaRegen(Math.max(player.getStaminaRegen() + 10f, player.getStaminaRegen() * 1.2f)), 2f),
+
+        new StatOption(15, "Max Stamina",
+            "Massively increases your maximum stamina",
+            () -> {
+                player.setMaxStamina((int)Math.max(player.getMaxStamina() + 100f, player.getMaxStamina() * 1.2f));
+                stmBarTotalWidth = calculateMaxStmWidth();
+            }, 2f)
+        ) ;
 
     Texture xpBarFull;
     Texture xpBarEmpty;
@@ -303,6 +362,8 @@ public class Main extends ApplicationAdapter {
     Vector2 dash;
     byte dashUp;
     byte dashRight;
+
+    Array<DamageCounter> damageCounters;
 
     @Override
     public void create() {
@@ -314,17 +375,17 @@ public class Main extends ApplicationAdapter {
         clearing.setWrap(Texture.TextureWrap.Repeat, Texture.TextureWrap.Repeat); //Makes it tile
         tiledRegion = new TextureRegion(clearing);
 
+
+        player = new PlayerInfo();
+
         playerT = new Texture("player.png");
         playerS = new Sprite(playerT);
-        playerS.setSize(0.45f, 0.45f);
-
-
+        playerS.setSize(player.getSize(), player.getSize());
 
 
         batch = new SpriteBatch();
         viewport = new FitViewport(10, 6);
 
-        player = new PlayerInfo();
 
         playerBullet = new Texture("playerProjectile.png");
 
@@ -337,10 +398,10 @@ public class Main extends ApplicationAdapter {
 
         enemyTexture = new Texture("enemy.png"); // Add your enemy texture
         enemies = new Array<>();
-        enemyTypes.add(new EnemyType(100, 10, 1, 0.25f, 60, 20, enemyTexture)); //Normal
-        enemyTypes.add(new EnemyType(70, 5, 1.3f, 0.15f, 40, 15, enemyTexture)); //Fast
-        enemyTypes.add(new EnemyType(25, 25, 0.65f, 0.5f, 50, 20, enemyTexture)); //Tank
-        enemyTypes.add(new EnemyType(1, 250, 0.75f, 0.65f, 500, 50, enemyTexture)); //Miniboss
+        enemyTypes.add(new EnemyType(100, 10, 1.1f, 0.25f, 60, 10, enemyTexture)); //Normal
+//        enemyTypes.add(new EnemyType(70, 5, 1.5f, 0.15f, 40, 10, enemyTexture)); //Fast(Deleted cause I don't like it
+        enemyTypes.add(new EnemyType(10, 25, 1f, 0.5f, 50, 10, enemyTexture)); //Tank
+        enemyTypes.add(new EnemyType(1, 250, 0.8f, 0.65f, 500, 10, enemyTexture)); //Mini boss
 
 
         bullets = new Array<>();
@@ -380,6 +441,8 @@ public class Main extends ApplicationAdapter {
         dashRight = 0;
         hpBarTotalWidth = calculateMaxHPWidth();
         stmBarTotalWidth = calculateMaxStmWidth();
+
+        damageCounters = new Array<>();
     }
 
 
@@ -494,7 +557,7 @@ public class Main extends ApplicationAdapter {
                 player.spendStamina(player.getPlayerAttackStmCost());
             }
 
-            if (Math.abs(dash.x) < 0.5f && Math.abs(dash.y) < 0.5f) {
+            if ((Math.abs(dash.x) < 0.5f && Math.abs(dash.y) < 0.5f) && (player.getPlayerKB().x < 0.2f && player.getPlayerKB().y < 0.2f)) {
                 player.setDoCollision(true);
             }
             playerS.translate(dash.x * delta, dash.y * delta);
@@ -507,32 +570,32 @@ public class Main extends ApplicationAdapter {
         if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE) && canUnPause) {
             isNotPaused = !isNotPaused;
         }
-
-//        if (Gdx.input.isKeyJustPressed(Input.Keys.F11)) {
-//            if (Gdx.graphics.isFullscreen()) {
-//                Gdx.graphics.setWindowedMode(1920, 1080);
-//            } else {
-//                Gdx.graphics.setFullscreenMode(Gdx.graphics.getDisplayMode());
-//            }
-//        }
     }
 
 
     private void logic() {
         if (isNotPaused) {
+            player.setX(playerS.getX());
+            player.setY(playerS.getY());
+            //Get deltatime
+            float delta = Gdx.graphics.getDeltaTime();
+            //Apply player kb
+            playerS.translate(player.getPlayerKB().x * delta, player.getPlayerKB().y * delta);
+            player.setPlayerKB(player.getPlayerKB().scl((float)Math.pow(0.9f, delta * 60f))); //Makes it not fps dependent);
+
             if (player.getXp() >= player.getXpToLevelUp()) {
                 levelUp();
             }//If they have enough xp to levelup
 
-            shotCD += Gdx.graphics.getDeltaTime();//Shot Cooldown
-            player.addIFrames(Gdx.graphics.getDeltaTime());//Manages IFrames
-            player.heal(Gdx.graphics.getDeltaTime() * player.getHpRegen());//HP Regen
-            player.regenStamina(Gdx.graphics.getDeltaTime() * player.getStaminaRegen()); //stm regen
+            shotCD += delta;//Shot Cooldown
+            player.addIFrames(delta);//Manages IFrames
+            player.heal(delta * player.getHpRegen());//HP Regen
+            player.regenStamina(delta * player.getStaminaRegen()); //stm regen
 
             // Spawn 1 enemy every 2 seconds
             float enemySpawnTime = 2f;
-            if (Math.random() < Gdx.graphics.getDeltaTime() * 1 / enemySpawnTime) {
-                for (int i = 0; i < player.getLvl(); i++) {
+            if (random.nextDouble(0,1) < delta * 1 / enemySpawnTime) {
+                for (int i = 0; i < Math.min(player.getLvl(), 10); i++) {
                     if(enemies.size < 250) {
                         spawnEnemy();
                     }
@@ -549,11 +612,11 @@ public class Main extends ApplicationAdapter {
                 Enemy enemy = enemies.get(i);
                 // Update the enemy's position and state
 
-                if((enemy.x-playerX)*(enemy.x-playerX) + (enemy.y-playerY) + (enemy.y-playerY) > enemy.maxDist) {
+                if((enemy.x-playerX)*(enemy.x-playerX) + (enemy.y-playerY) * (enemy.y-playerY) > enemy.maxDist) {
                     enemies.removeIndex(i); //Despawns enemy if the player gets too far from it
                     spawnEnemy(); //Respawns a new enemy so that u cant just liek run aaway forever
                 }
-                enemy.update(Gdx.graphics.getDeltaTime(), playerX, playerY, playerBounds, player);
+                enemy.update(delta, playerX, playerY, playerBounds, player);
                 enemy.doCollision(enemies);
                 if (enemy.isDead()) { // Remove enemy if dead
                     enemies.removeIndex(i);
@@ -569,7 +632,7 @@ public class Main extends ApplicationAdapter {
                 isNotPaused = false;//If game over
                 canUnPause = false; //Basically freezes the game
             }
-            updateBullets(Gdx.graphics.getDeltaTime());
+            updateBullets(delta);
         }
     }
 
@@ -584,8 +647,11 @@ public class Main extends ApplicationAdapter {
                     bullet.hitEnemies.add(enemy);
 
                     enemy.applyKnockBack(player.getBulletKnockback(), bullet.x, bullet.y);
-                    enemy.takeDamage(bullet.damage);
+                    float critsMulti = getCritMulti();
+                    float bulletDmg = bullet.damage*critsMulti; //Damages the enemy based on crit chance and stuff
+                    enemy.takeDamage(bulletDmg);
                     player.heal(bullet.damage * player.getLifeSteal());
+                    damageCounters.add(new DamageCounter(bulletDmg, (int) ((critsMulti - 1)/player.getCritAmount()), bullet.x, bullet.y, font));
 
                     if (bullet.pierce <= 0) {
                         bullet.bounce(enemies);
@@ -705,11 +771,31 @@ public class Main extends ApplicationAdapter {
 
         batch.end();
 
+        //UI
         float uiHeight = uiCamera.viewportHeight;
         float uiWidth = uiCamera.viewportWidth;
         uiCamera.update();
         batch.setProjectionMatrix(uiCamera.combined);
         batch.begin();
+
+
+        Array<Integer> deletableDmgCounters = new Array<>();
+        //Draw dmg counters
+        for (int i = 0; i < damageCounters.size; i++) {
+            DamageCounter damageCounter = damageCounters.get(i);
+            damageCounter.render(batch, viewport);
+            if(isNotPaused) {
+                damageCounter.update(Gdx.graphics.getDeltaTime());
+            }
+            if(damageCounter.shouldDelete()) {
+                deletableDmgCounters.add(i); //Adds it to an array of dmg counters to delete
+            }
+        }
+        for(int i = 0; i < deletableDmgCounters.size; i++) { //Deletes the deletable counters
+            damageCounters.removeIndex(deletableDmgCounters.get(i) - i);
+        }
+
+        font.setColor(1, 1, 1, 1);
 
         float xpPercent = (float) player.getXp() /player.getXpToLevelUp();
         int filledXP = (int) (xpPercent* xpBarFull.getWidth());
@@ -766,28 +852,25 @@ public class Main extends ApplicationAdapter {
             barRightEmpty.getRegionWidth() * barScale, barRightEmpty.getRegionHeight()*barScale); //The end
 
         //Filled bar
+        int stmBarFilledSegments = (int) (Math.ceil(((segmentCount + 4) * (player.getStamina() / player.getMaxStamina())) - 4)); //The filled area
+        //The filled area
+        //The end of the bar
         if(!player.isExhausted()) {
-            int stmBarFilledSegments = (int) (Math.ceil(((segmentCount + 4) * (player.getStamina() / player.getMaxStamina())) - 4)); //The filled area
             for (int i = 0; i < stmBarFilledSegments; i++) {
                 batch.draw(stmFilled, 60 + i * barScale, uiHeight - 150 - stmBarRight.getRegionHeight() * barScale * 0.8f,
                     stmFilled.getRegionWidth() * barScale, stmFilled.getRegionHeight() * barScale);
             }
             stmBarRight = new TextureRegion(barsFull, barsFull.getWidth() - 4 - Math.min(stmBarFilledSegments, 0), 5, 4 + Math.min(stmBarFilledSegments, 0), 5);
-            if (player.getStamina() > 0) {
-                batch.draw(stmBarRight, 60 + Math.max(stmBarFilledSegments, 0) * barScale, uiHeight - 150 - stmBarRight.getRegionHeight() * barScale * 0.8f,
-                    stmBarRight.getRegionWidth() * barScale, stmBarRight.getRegionHeight() * barScale); //The end of the bar
-            }
         } else {
-            int stmBarFilledSegments = (int) (Math.ceil(((segmentCount + 4) * (player.getStamina() / player.getMaxStamina())) - 4)); //The filled area
             for (int i = 0; i < stmBarFilledSegments; i++) {
                 batch.draw(stmFilledEx, 60 + i * barScale, uiHeight - 150 - stmBarRight.getRegionHeight() * barScale * 0.8f,
                     stmFilledEx.getRegionWidth() * barScale, stmFilledEx.getRegionHeight() * barScale);
             }
             stmBarRight = new TextureRegion(barsFull, barsFull.getWidth() - 4 - Math.min(stmBarFilledSegments, 0), 10, 4 + Math.min(stmBarFilledSegments, 0), 5);
-            if (player.getStamina() > 0) {
-                batch.draw(stmBarRight, 60 + Math.max(stmBarFilledSegments, 0) * barScale, uiHeight - 150 - stmBarRight.getRegionHeight() * barScale * 0.8f,
-                    stmBarRight.getRegionWidth() * barScale, stmBarRight.getRegionHeight() * barScale); //The end of the bar
-            }
+        }
+        if (player.getStamina() > 0) {
+            batch.draw(stmBarRight, 60 + Math.max(stmBarFilledSegments, 0) * barScale, uiHeight - 150 - stmBarRight.getRegionHeight() * barScale * 0.8f,
+                stmBarRight.getRegionWidth() * barScale, stmBarRight.getRegionHeight() * barScale); //The end of the bar
         }
 
         if (levelUp) {
@@ -832,9 +915,9 @@ public class Main extends ApplicationAdapter {
                 String upgradeName = statOptions.get(i).name;
                 String upgradeDescription = statOptions.get(i).description;
 
-                font.getData().setScale(1.4f); // Set scale before measuring
+                font.getData().setScale(1.25f); // Set scale before measuring
 
-            // Measure name
+                // Measure name(Like get the centering and stuff)
                 GlyphLayout nameLayout = new GlyphLayout(font, upgradeName);
                 float nameX = optionX + (optionWidth - nameLayout.width) / 2f;
                 float nameY = optionY + (optionHeight + nameLayout.height) / 1.65f;
@@ -849,7 +932,7 @@ public class Main extends ApplicationAdapter {
                 // Y position: below the name
                 float descY = nameY - nameLayout.height - 15f;
 
-                font.getData().setScale(1.2f);
+                font.getData().setScale(1.1f);
                 // Draw with wrapping and center alignment
                 font.draw(batch, upgradeDescription, descX, descY, wrapWidth, Align.center, true);
 
@@ -930,7 +1013,7 @@ public class Main extends ApplicationAdapter {
     // Helper method to shoot in a specific direction with spread
     private void shootInDirection(float baseAngle, float spreadRadians, float playerX, float playerY, float bulletSize) {
         // Add random spread
-        float randomSpread = (float) ((Math.random() - 0.5f) * spreadRadians);
+        float randomSpread = (random.nextFloat(0,1) - 0.5f) * spreadRadians;
         float finalAngle = baseAngle + randomSpread;
 
         // Get bullet speed and direction
@@ -946,15 +1029,7 @@ public class Main extends ApplicationAdapter {
         }
 
         //increase bullet distance based on player movement speed
-        float currentSpeed = (float) Math.sqrt(bulletSpeedX*bulletSpeedX + bulletSpeedY * bulletSpeedY);
-        float adjustedDistance;
-        if (playerSpeedBoost > 1f && currentSpeed > 0.01f) {
-            //If the player is moving, adjust the thing(If the player speed boost is rlly low, it makes your range really high(intended)
-            adjustedDistance = player.getBulletDistance() * (currentSpeed / playerSpeedBoost) * 0.5f;
-        } else {
-            //Otherwise use normal
-            adjustedDistance = player.getBulletDistance();
-        }
+        float adjustedDistance = getAdjustedDistance(bulletSpeedX, bulletSpeedY, playerSpeedBoost);
         // Create new bullet
         Bullet newBullet = new Bullet(
             playerX, playerY,
@@ -969,6 +1044,18 @@ public class Main extends ApplicationAdapter {
         bullets.add(newBullet);
     }
 
+    private float getAdjustedDistance(float bulletSpeedX, float bulletSpeedY, float playerSpeedBoost) {
+        float currentSpeed = (float) Math.sqrt(bulletSpeedX * bulletSpeedX + bulletSpeedY * bulletSpeedY);
+        float adjustedDistance;
+        if (playerSpeedBoost > 1f && currentSpeed > 0.01f) {
+            //If the player is moving, adjust the thing(If the player speed boost is rlly low, it makes your range really high(intended)
+            adjustedDistance = player.getBulletDistance() * (currentSpeed/playerSpeedBoost) * 0.5f;
+        } else {
+            //Otherwise use normal
+            adjustedDistance = player.getBulletDistance();
+        }
+        return adjustedDistance;
+    }
 
 
     private void updateBullets(float deltaTime) {
@@ -988,8 +1075,6 @@ public class Main extends ApplicationAdapter {
         float height = viewport.getWorldHeight();
         float camX = viewport.getCamera().position.x;
         float camY = viewport.getCamera().position.y;
-
-        Random random = new Random();
 
         int side = random.nextInt(0,4); // 0 = top, 1 = right, 2 = bottom, 3 = left
 
@@ -1023,7 +1108,7 @@ public class Main extends ApplicationAdapter {
             totalWeight += type.weight;
         }
 
-        float randomNum = (float) Math.random() * totalWeight;
+        float randomNum = random.nextFloat(0,1) * totalWeight;
         float current = 0;
 
 
@@ -1038,8 +1123,6 @@ public class Main extends ApplicationAdapter {
     }
 
     public StatOption getRandomStatOption (List<StatOption> options) {
-        Random random = new Random();
-
         int totalWeight = 1;
 
         for (StatOption option: options) {
@@ -1064,9 +1147,9 @@ public class Main extends ApplicationAdapter {
         return (float) ((maxHPWidth)/(1+Math.pow(3, -maxHPslope*(player.getMaxHP()-100))));
     }
     private float calculateMaxStmWidth() {
-        int maxHPWidth = 40;
-        float maxHPslope = 0.01f;
-        return (float) ((maxHPWidth)/(1+Math.pow(3, -maxHPslope*(player.getMaxHP()-100))));
+        int maxSTMWidth = 40;
+        float maxSTMslope = 0.01f;
+        return (float) ((maxSTMWidth)/(1+Math.pow(3, -maxSTMslope*(player.getMaxStamina()-100))));
     }
 
     private void levelUp() {
@@ -1076,12 +1159,30 @@ public class Main extends ApplicationAdapter {
         isNotPaused = false;
         levelUp = true;
         statOptions.clear();
+        player.setMaxStamina(player.getMaxStamina()+10);
+        player.setStaminaRegen(player.getStaminaRegen()+0.5f);
+        stmBarTotalWidth = calculateMaxStmWidth();
         while (statOptions.size < 3 ){
             StatOption randOption = getRandomStatOption(statOptionList); //Gets a random option from the list
             if(!statOptions.contains(randOption,true)) { // If it doesnt already have the option
                 statOptions.add(randOption); //Adds the option
             }
         }
+    }
+
+    public float getCritMulti() {
+        float multiplier = 1;// Allows multiple crits based on crit chance (e.g., 2.5 means 2 full chances and 50% for a 3rd)
+
+        int guaranteedCrits = (int) Math.floor(player.getCritChance()); //Guaranteed crits chance
+        float partialCritChance = player.getCritChance() - guaranteedCrits;
+
+        multiplier += player.getCritAmount()*guaranteedCrits;
+
+        if (random.nextFloat() < partialCritChance) { //The chance one
+            multiplier += player.getCritAmount();
+        }
+
+        return multiplier;
     }
 
 }

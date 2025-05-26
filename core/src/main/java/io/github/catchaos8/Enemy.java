@@ -95,9 +95,8 @@ public class Enemy {
             if(playerInfo.getiFrames() >= 0.5f) {
                 playerInfo.dealDamage(damage);
                 playerInfo.setiFrames(0);
-            }
-            if(playerInfo.getBulletKnockback() > 5) {
-                applyKnockBack(25f, playerBounds.x + playerBounds.width / 2, playerBounds.y + playerBounds.height / 2);
+                playerInfo.applyKB(5f, new Vector2(x + size/2, y + size/2));
+                playerInfo.setDoCollision(false);
             }
         }
     }
