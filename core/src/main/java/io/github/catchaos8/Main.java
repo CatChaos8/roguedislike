@@ -19,6 +19,8 @@ import java.util.Random;
 
 /** {@link ApplicationListener} implementation shared by all platforms. */
 public class Main extends ApplicationAdapter {
+    int enemiesKilled;
+
     ShapeRenderer shapeRenderer;
 
 
@@ -134,6 +136,8 @@ public class Main extends ApplicationAdapter {
     }
 
     private void set() {
+        enemiesKilled = 0;
+
         fadeAlpha = 0;
         time = 0;
 
@@ -500,7 +504,8 @@ public class Main extends ApplicationAdapter {
                 enemy.doCollision(enemies);
                 if (enemy.isDead()) { // Remove enemy if dead
                     enemies.removeIndex(i);
-                    player.gainXp((int) enemy.xp);
+                    player.gainXp((int) enemy.xp); //Gives the player xp and increases the kill counter
+                    enemiesKilled++;
                 }
 
             }
