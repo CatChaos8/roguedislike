@@ -3,6 +3,8 @@ package io.github.catchaos8;
 import com.badlogic.gdx.math.Vector2;
 
 public class PlayerInfo {
+    private float survivedTime;
+
     private float x, y;
     private float size;
 
@@ -57,12 +59,12 @@ public class PlayerInfo {
         this.rightShots = 0;
         this.speed = 2.5f;
 
-        this.attackSpeed = 9999;
-        this.playerAttackStmCost = 0.1f;
+        this.attackSpeed = 1;
+        this.playerAttackStmCost = 5f;
 
         this.maxHP = 100;
         this.hp = maxHP;
-        this.hpRegen = 111f; //Per second
+        this.hpRegen = 0f; //Per second
         this.lifeSteal = 0.0f;
 
         this.bounce = 0;
@@ -368,4 +370,48 @@ public class PlayerInfo {
     public void setNoStmRegenBoost(boolean noStmRegenBoost) {
         this.noStmRegenBoost = noStmRegenBoost;
     }
+
+    public float getSurvivedTime() {
+        return survivedTime;
+    }
+
+    public void setSurvivedTime(float survivedTime) {
+        this.survivedTime = survivedTime;
+    }
+
+
+    public String getString() {
+
+
+        return "Player Stats:\n" +
+            "Level: " + lvl + "\n" +
+            "XP: " + xp + " / " + getXpToLevelUp() + "\n" +
+            "Survived Time: " + String.format("%02d:%02d", (int) Math.floor(survivedTime / 60), (int)(survivedTime % 60)) + "\n\n" + //Displays time in minutes/seconds
+
+        "HP: " + (int) hp + " / " + maxHP + " (Regen: " + hpRegen + "/s)\n" +
+            "Stamina: " + (int) stamina + " / " + maxStamina +
+            " (Regen: " + staminaRegen + "/s, Exhausted: " + isExhausted + ")\n\n" +
+
+            "Movement Speed: " + speed + "\n" +
+            "Attack Speed: " + attackSpeed + "x\n" +
+            "Attack Stamina Cost: " + playerAttackStmCost + "\n" +
+//            "Lifesteal: " + (int)(lifeSteal * 100) + "%\n\n" +
+
+            "Crit Chance: " + (int)(critChance * 100) + "%\n" +
+            "Crit Damage Bonus: " + (int)(critAmount * 100) + "%\n" +
+            "Luck: " + (int) luck + "\n\n" +
+
+            "Bullet Damage: " + bulletDamage*10 + "\n" +
+            "Bullet Speed: " + bulletSpeed + "\n" +
+            "Bullet Size: " + bulletSize + "\n" +
+            "Bullet Accuracy: " + bulletAccuracy + "\n" +
+            "Bullet Distance: " + bulletDistance + "\n" +
+            "Bullet Knockback: " + bulletKnockback + "\n" +
+            "Pierce: " + pierce + ", Bounce: " + bounce + "\n\n" +
+
+            "Shots - Forward: " + forwardShots + ", Backward: " + backwardsShots +
+            ", Left: " + leftShots + ", Right: " + rightShots;
+    }
+
 }
+

@@ -7,6 +7,10 @@ import com.badlogic.gdx.math.Rectangle;
 import com.badlogic.gdx.utils.Array;
 
 public class Bullet {
+    boolean isCrit;
+    float critMulti;
+
+
     int bounces;
     int pierce;
     float damage;
@@ -26,7 +30,7 @@ public class Bullet {
     // In Bullet class
     Array<Enemy> hitEnemies = new Array<>();  // This will store the enemies the bullet has hit
 
-    public Bullet(float x, float y, float speedX, float speedY, float size, int bounces, int pierce, Animation<TextureRegion> animation, float damage, float maxDistance) {
+    public Bullet(float x, float y, float speedX, float speedY, float size, int bounces, int pierce, Animation<TextureRegion> animation, float damage, float maxDistance, float critMulti) {
         this.x = x;
         this.y = y;
         this.speedX = speedX;
@@ -38,6 +42,7 @@ public class Bullet {
         this.damage = damage;
         this.maxDistance = maxDistance;
         this.baseDist = maxDistance;
+        this.critMulti = critMulti;
     }
 
     // Update bullet position and travel distance
