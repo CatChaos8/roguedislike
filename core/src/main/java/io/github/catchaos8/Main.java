@@ -19,6 +19,7 @@ import java.util.Random;
 
 /** {@link ApplicationListener} implementation shared by all platforms. */
 public class Main extends ApplicationAdapter {
+    float damageDealt;
     int enemiesKilled;
 
     ShapeRenderer shapeRenderer;
@@ -136,6 +137,7 @@ public class Main extends ApplicationAdapter {
     }
 
     private void set() {
+        damageDealt = 0;
         enemiesKilled = 0;
 
         fadeAlpha = 0;
@@ -208,7 +210,7 @@ public class Main extends ApplicationAdapter {
 
     @Override
     public void render() {
-        gameSpeed = 1f;
+        gameSpeed = 2f;
         delta = Gdx.graphics.getDeltaTime()*gameSpeed; //Can change the speed the game runs at with this
         if(started) {
             inputs();
@@ -253,6 +255,29 @@ public class Main extends ApplicationAdapter {
 
                     nameX = uiCamera.viewportWidth / 2 - nameLayout.width / 2f; //Centered
                     nameY = uiCamera.viewportHeight / 25;
+
+                    font.draw(batch, nameLayout, nameX, nameY);
+                } else {
+                    font.setColor(Color.WHITE);
+                    font.getData().setScale(1.25f);
+                    //Draw the player's stats if they r dead
+                    nameLayout = new GlyphLayout(font, player.getString());
+
+                    nameX = 150;
+                    nameY = uiCamera.viewportHeight / 2 + nameLayout.height/2f;
+
+                    font.draw(batch, nameLayout, nameX, nameY);
+
+                    int score = (int) (Math.floor((player.getSurvivedTime()*5 + player.getLvl()*100 + enemiesKilled *10 + damageDealt*5)/10)*10);
+                    String string =
+                        "Time Survived: " + player.getSurvivedTimeString() + "\n" +
+                        "Player Level: " + player.getLvl() + "\n" +
+                        "Enemies Killed: " + enemiesKilled + "\n" +
+                        "Damage Dealt: " + damageDealt + "\n" +
+                        "Total Score: " + score;
+                    nameLayout = new GlyphLayout(font, string);
+                    nameX = uiCamera.viewportWidth - 250 - nameLayout.width;
+                    nameY = uiCamera.viewportHeight/2 + nameLayout.height/2f;
 
                     font.draw(batch, nameLayout, nameX, nameY);
                 }
@@ -303,7 +328,7 @@ public class Main extends ApplicationAdapter {
             batch.end();
             if(time < fadeTime && player != null) {
                 draw();
-
+                //Fade the screen so that when you die it fades into the death screen
                 fadeAlpha += delta/fadeTime;
 
 
@@ -539,13 +564,14 @@ public class Main extends ApplicationAdapter {
                     float critsMulti = bullet.critMulti;
                     float bulletDmg = bullet.damage*critsMulti; //Damages the enemy based on crit chance and stuff
                     enemy.takeDamage(bulletDmg);
+                    damageDealt += bulletDmg*10;
                     player.heal(bullet.damage * player.getLifeSteal());
                     damageCounters.add(new DamageCounter(bulletDmg, (int) ((critsMulti - 1)/player.getCritAmount()), bullet.x, bullet.y, font));
 
-                    if (bullet.pierce <= 0) {
+                    if (bullet.pierce <= 0) { //If there r no pierces left, bounce
                         bullet.bounce(enemies);
                     }
-                    bullet.pierce--;
+                    bullet.pierce--; //Decrease pierce so that it pierces
 
                     if (bullet.shouldRemove()) {
                         bullets.removeIndex(i);

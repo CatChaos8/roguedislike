@@ -64,7 +64,7 @@ public class PlayerInfo {
 
         this.maxHP = 100;
         this.hp = maxHP;
-        this.hpRegen = 0f; //Per second
+        this.hpRegen = 0; //Per second
         this.lifeSteal = 0.0f;
 
         this.bounce = 0;
@@ -379,6 +379,11 @@ public class PlayerInfo {
         this.survivedTime = survivedTime;
     }
 
+    public String getSurvivedTimeString() {
+        return
+            String.format("%02d:%02d", (int) Math.floor(survivedTime / 60), (int)(survivedTime % 60)); //Displays time in minutes/seconds;
+    }
+
 
     public String getString() {
 
@@ -388,9 +393,9 @@ public class PlayerInfo {
             "XP: " + xp + " / " + getXpToLevelUp() + "\n" +
             "Survived Time: " + String.format("%02d:%02d", (int) Math.floor(survivedTime / 60), (int)(survivedTime % 60)) + "\n\n" + //Displays time in minutes/seconds
 
-        "HP: " + (int) hp + " / " + maxHP + " (Regen: " + hpRegen + "/s)\n" +
+        "Max HP: " + maxHP + " (Regen: " + hpRegen + "/s)\n" +
             "Stamina: " + (int) stamina + " / " + maxStamina +
-            " (Regen: " + staminaRegen + "/s, Exhausted: " + isExhausted + ")\n\n" +
+            " (Regen: " + staminaRegen + "/s" + ")\n\n" +
 
             "Movement Speed: " + speed + "\n" +
             "Attack Speed: " + attackSpeed + "x\n" +
